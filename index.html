@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>採用基準クイズアプリ</title>
+    <style>
+        /* CSS: アプリ全体のデザイン */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+        :root {
+            --primary-orange: #FF9800; /* EXIO DESIGNのキーカラーを意識 */
+            --light-orange: #FFD54F;
+            --dark-orange: #F57C00;
+            --text-dark: #333;
+            --text-light: #fff;
+            --bg-light: #fefefe;
+            --bg-soft: #fffdfa;
+            --border-color: #E0E0E0;
+            --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.08);
+            --border-radius-soft: 12px;
+            --border-radius-round: 30px;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--primary-orange);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-dark);
+            overflow-y: auto; /* スクロール可能にする */
+        }
+
+        .quiz-wrapper {
+            background-color: var(--primary-orange);
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .top-bg-circle {
+            position: absolute;
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 700px;
+            background-color: var(--light-orange);
+            border-radius: 50%;
+            z-index: 0;
+            opacity: 0.3;
+            animation: pulseBg 3s infinite alternate;
+        }
+        @keyframes pulseBg {
+            from { transform: translateX(-50%) scale(1); opacity: 0.3; }
+            to { transform: translateX(-50%) scale(1.05); opacity: 0.4; }
+        }
+
+        .quiz-container {
+            background-color: var(--bg-light);
+            border-radius: var(--border-radius-soft);
+            box-shadow: var(--shadow-light);
+            width: 100%;
+            max-width: 420px;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+        .app-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            color: #666;
+            cursor: pointer;
+        }
+        .app-header .title {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: var(--text-dark);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .app-header .progress-bar-container {
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .app-header .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary-orange);
+            transition: width 0.3s ease-in-out;
+        }
+
+        .quiz-content {
+            flex-grow: 1;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        #genre-selection h2 {
+            margin-top: 20px;
+            margin-bottom: 30px;
+            font-size: 1.3em;
+            color: var(--primary-orange);
+            font-weight: 700;
+        }
+
+        .genre-btn {
+            display: block;
+            width: calc(100% - 20px);
+            margin: 0 auto 15px auto;
+            background-color: var(--primary-orange);
+            color: var(--text-light);
+            border: none;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            font-weight: 700;
+            border-radius: var(--border-radius-round);
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .genre-btn:hover {
+            background-color: var(--dark-orange);
+            transform: translateY(-2px);
+        }
+
+        #quiz-screen {
+            display: none;
+            height: 100%;
+        }
+        #quiz-screen .quiz-content {
+            justify-content: flex-start;
+        }
+
+        .question-card {
+            background-color: var(--bg-soft);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-soft);
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow-light);
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #question {
+            font-size: 1.25em;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-align: center;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        #answer-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .answer-btn {
+            background-color: var(--bg-soft);
+            border: 1px solid var(--border-color);
+            color: var(--text-dark);
+            padding: 15px 20px;
+            font-size: 1.05em;
+            font-weight: 500;
+            border-radius: var(--border-radius-round);
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .answer-btn:hover:not(:disabled) {
+            background-color: #E0F2F7;
+            border-color: #90CAF9;
+        }
+        .answer-btn.correct {
+            background-color: #E8F5E9;
+            border-color: #66BB6A;
+            color: var(--text-dark);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+        }
+        .answer-btn.incorrect {
+            background-color: #FFEBEE;
+            border-color: #EF5350;
+            color: var(--text-dark);
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+        }
+        .answer-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #hint-controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+
+        #hint-btn {
+            background: none;
+            border: none;
+            color: #666;
+            padding: 10px 15px;
+            border-radius: var(--border-radius-round);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.95em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        #hint-btn:hover {
+            background-color: #f0f0f0;
+            color: var(--text-dark);
+        }
+        
+        #hint-box {
+            background-color: #FFFDE7;
+            border: 1px solid #FFECB3;
+            border-radius: var(--border-radius-soft);
+            padding: 15px;
+            margin-top: 15px;
+            text-align: left;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #616161;
+            display: none;
+        }
+
+        #rationale-container {
+            background-color: #E3F2FD;
+            border: 1px solid #90CAF9;
+            border-radius: var(--border-radius-soft);
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: #424242;
+            display: none;
+        }
+        #rationale-container strong {
+            color: #1976D2;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        #next-btn, #restart-btn {
+            width: calc(100% - 20px);
+            margin: 25px auto 0 auto;
+            background-color: var(--primary-orange);
+            color: var(--text-light);
+            border: none;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            font-weight: 700;
+            border-radius: var(--border-radius-round);
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        #next-btn:hover, #restart-btn:hover {
+            background-color: var(--dark-orange);
+            transform: translateY(-2px);
+        }
+
+        #result-screen {
+            display: none;
+            text-align: center;
+        }
+        #score-text {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-top: 40px;
+            margin-bottom: 30px;
+            color: var(--primary-orange);
+            white-space: pre-wrap; /* 改行を反映 */
+        }
+
+        @media (min-width: 768px) {
+            .quiz-wrapper {
+                min-height: auto;
+                padding: 40px;
+            }
+            .quiz-container {
+                min-height: 700px;
+                max-width: 500px;
+                margin-top: 50px;
+            }
+            .top-bg-circle {
+                width: 900px;
+                height: 900px;
+                top: -200px;
+            }
+            #genre-selection h2 {
+                font-size: 1.5em;
+            }
+            .genre-btn, .answer-btn, #next-btn, #restart-btn {
+                padding: 18px 25px;
+                font-size: 1.2em;
+            }
+            #question {
+                font-size: 1.4em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-wrapper">
+        <div class="top-bg-circle"></div>
+        <div class="quiz-container">
+            <div class="app-header" id="app-header">
+                <button class="close-btn" onclick="goToGenreSelection()">✕</button>
+                <div class="title" id="header-title"></div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+            </div>
+            
+            <div class="quiz-content">
+                <div id="genre-selection">
+                    <h2>挑戦するクイズを選んでください</h2>
+                    <button class="genre-btn" onclick="startQuiz('exio')">🏢 EXIO DESIGN編</button>
+                    <button class="genre-btn" onclick="startQuiz('resume')">📄 履歴書編</button>
+                    <button class="genre-btn" onclick="startQuiz('portfolio')">🎨 ポートフォリオ編</button>
+                    <button class="genre-btn" onclick="startQuiz('interview')">🎤 面接編</button>
+                </div>
+
+                <div id="quiz-screen">
+                    <div class="question-card">
+                        <h3 id="question"></h3>
+                    </div>
+                    <div id="answer-buttons"></div>
+                    <div id="hint-controls">
+                        <button id="hint-btn">💡 ヒントを見る</button>
+                    </div>
+                    <div id="hint-box"></div>
+                    <div id="rationale-container"></div>
+                    <button id="next-btn">次の問題へ</button>
+                </div>
+                
+                <div id="result-screen">
+                    <h2 id="score-text"></h2>
+                    <button id="restart-btn">もう一度挑戦する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = {
+            exio: [
+                {
+                    question: "株式会社EXIO DESIGNが設立されたのはいつ？",
+                    answers: [{ text: "A. 2015年", correct: false }, { text: "B. 2018年", correct: false }, { text: "C. 2021年", correct: true }, { text: "D. 2024年", correct: false }],
+                    hint: "比較的最近設立された会社です。",
+                    rationale: "公式サイトの情報に基づき、2021年に設立されました。"
+                },
+                {
+                    question: "EXIO DESIGNが大切にしていることはどれ？",
+                    answers: [{ text: "A. 便利さを追求することのみ", correct: false }, { text: "B. 人に寄り添いながら、新しいワクワクを届けること", correct: true }, { text: "C. コストを削減すること", correct: false }, { text: "D. 流行を真似してデザインすること", correct: false }],
+                    hint: "ミッションには『人』と『新しい体験』というキーワードが入っています。",
+                    rationale: "ただ便利なだけでなく、『人に寄り添い、ワクワクする体験』を創出することを重視しています。"
+                },
+                {
+                    question: "社風を表すキーワードとして正しいものは？",
+                    answers: [{ text: "A. 縦社会で厳格", correct: false }, { text: "B. フラットでオープン", correct: true }, { text: "C. 完全個人主義", correct: false }, { text: "D. 年功序列", correct: false }],
+                    hint: "年次や役職に関係なく、誰でも意見が言える環境です。",
+                    rationale: "年齢や役職に縛られず、誰もが自由にアイデアを発信できる『フラットでオープン』な社風です。"
+                },
+                {
+                    question: "社内で活用されている最新ツールはどれ？",
+                    answers: [{ text: "A. ExcelとWord", correct: false }, { text: "B. PhotoshopとIllustratorのみ", correct: false }, { text: "C. FigmaやSlack", correct: true }, { text: "D. 手書きノートと電話", correct: false }],
+                    hint: "現代的なデザイン会社でよく使われるコラボレーションツールです。",
+                    rationale: "効率的で自由度の高い働き方を実現するため、FigmaやSlackなどの最新ツールを活用しています。"
+                },
+                {
+                    question: "EXIO DESIGNが掲げる合言葉は？",
+                    answers: [{ text: "A. 世界をデザインする", correct: false }, { text: "B. 未来のあたりまえをデザインする", correct: true }, { text: "C. 人生をデザインする", correct: false }, { text: "D. デザインで稼ぐ", correct: false }],
+                    hint: "まだ存在しない『常識』を創り出す、という意気込みが込められています。",
+                    rationale: "まだこの世に存在しない体験を自分たちの手でつくり出す、という想いを込めた『未来のあたりまえをデザインする』が合言葉です。"
+                },
+                {
+                    question: "代表・橘涼介が大手IT企業で得た確信は何？",
+                    answers: [{ text: "A. コスト削減の仕組みが成長を支える", correct: false }, { text: "B. 体験をデザインする力が成長の根底にある", correct: true }, { text: "C. 見た目を整えることが最も大切", correct: false }, { text: "D. 広告費が成長を支える", correct: false }],
+                    hint: "会社の成長の『根っこ』にある力とは何でしょう。",
+                    rationale: "成長する企業やプロダクトの根底には、必ず『体験をデザインする力』があるという事実を確信したとされています。"
+                },
+                {
+                    question: "募集要項にあるUI/UXデザイナーの初任給はいくらから？",
+                    answers: [{ text: "A. 25万円〜", correct: false }, { text: "B. 30万円〜", correct: false }, { text: "C. 35万円〜", correct: false }, { text: "D. 40万円〜", correct: true }],
+                    hint: "新卒の給与としては、かなり高い水準です。",
+                    rationale: "募集要項によると、初任給は40万円～/月と記載されています。"
+                },
+                {
+                    question: "福利厚生として導入されているものはどれ？",
+                    answers: [{ text: "A. 無料マッサージルーム", correct: true }, { text: "B. 社員旅行（海外）必須", correct: false }, { text: "C. 毎日フリードリンクバー", correct: false }, { text: "D. 無条件の長期休暇制度", correct: false }],
+                    hint: "社員の心と体の健康をサポートするユニークな制度です。",
+                    rationale: "募集要項の福利厚生欄に、無料マッサージルームの記載があります。"
+                },
+                {
+                    question: "勤務地として記載されているのはどこ？",
+                    answers: [{ text: "A. 大阪本社", correct: false }, { text: "B. 新潟本社", correct: true }, { text: "C. 名古屋支社", correct: false }, { text: "D. 福岡デザインラボ", correct: false }],
+                    hint: "首都圏ではなく、地方に拠点を置いているのが特徴です。",
+                    rationale: "（ご指定のクイズ内容に基づき）勤務地は新潟本社とされています。"
+                },
+                {
+                    question: "EXIO DESIGNの所在地はどこでしょう？",
+                    answers: [{ text: "A. 東京都千代田区丸の内1-1-1", correct: false }, { text: "B. 北海道札幌市北区北7条西2丁目", correct: false }, { text: "C. 新潟県新田市此間6741", correct: true }, { text: "D. 神奈川県横浜市中区山下町99", correct: false }],
+                    hint: "前の問題の「勤務地」がヒントです。",
+                    rationale: "（ご指定のクイズ内容に基づき）所在地は新潟県新田市此間6741とされています。"
+                },
+                {
+                    question: "EXIO DESIGNの社風を最もよく表す言葉は？",
+                    answers: [{ text: "A. 「失敗を避ける」", correct: false }, { text: "B. 「背中を押し合う」", correct: true }, { text: "C. 「静かに働く」", correct: false }, { text: "D. 「競争主義」", correct: false }],
+                    hint: "仲間が新しい挑戦をするとき、どんな声をかけますか？",
+                    rationale: "仲間たちが『やってみよう！』とすぐに背中を押してくれる文化があります。"
+                },
+                {
+                    question: "社員のバックグラウンドとして特徴的なのは？",
+                    answers: [{ text: "A. 全員が美大卒", correct: false }, { text: "B. 文系や理系など多様な分野出身", correct: true }, { text: "C. 全員が海外大学出身", correct: false }, { text: "D. デザイン未経験者は採用しない", correct: false }],
+                    hint: "ユニークで柔軟な発想は、どのような環境から生まれるでしょうか？",
+                    rationale: "デザイン専攻出身者だけでなく、文系や理系など異なる分野から集まった人たちが協力し合うことで、ユニークな発想が生まれると考えています。"
+                },
+                {
+                    question: "代表・橘涼介が大学時代に所属していたのは？",
+                    answers: [{ text: "A. 経営学研究室", correct: false }, { text: "B. UXデザイン研究室", correct: true }, { text: "C. 建築デザイン研究室", correct: false }, { text: "D. 経済学ゼミ", correct: false }],
+                    hint: "現在の事業内容に直結する研究室です。",
+                    rationale: "代表メッセージによると、大学のUXデザイン研究室で学んだとされています。"
+                },
+                {
+                    question: "EXIO DESIGNが目指すのはどんな体験？",
+                    answers: [{ text: "A. 便利さだけに特化した体験", correct: false }, { text: "B. 思わず夢中になれる体験", correct: true }, { text: "C. 効率化のみを追求した体験", correct: false }, { text: "D. 他社の真似をした体験", correct: false }],
+                    hint: "ただ便利なだけじゃない、人の心を動かす体験です。",
+                    rationale: "便利さだけではなく、思わず夢中になれる体験をつくることを目指しています。"
+                },
+                {
+                    question: "選考プロセスに含まれていないものはどれ？",
+                    answers: [{ text: "A. マイページ登録", correct: false }, { text: "B. 書類・ポートフォリオ選考", correct: false }, { text: "C. 最終面接（対面 or オンライン）", correct: false }, { text: "D. 全国一斉筆記試験", correct: true }],
+                    hint: "多くの候補者が一斉に受けるようなテスト形式は採用されていません。",
+                    rationale: "募集要項に記載されている選考プロセスに、筆記試験は含まれていません。"
+                },
+                 {
+                    question: "EXIO DESIGNの働き方の特徴は？",
+                    answers: [{ text: "A. 出社のみでリモート禁止", correct: false }, { text: "B. リモートワークも可能", correct: true }, { text: "C. 海外勤務必須", correct: false }, { text: "D. 毎日シフト制", correct: false }],
+                    hint: "現代的な働き方を採用しています。",
+                    rationale: "リモートワークでの勤務も実施しており、柔軟な働き方が可能です。"
+                },
+                {
+                    question: "平均残業時間はどのくらい？",
+                    answers: [{ text: "A. 5時間/月", correct: false }, { text: "B. 10時間/月", correct: false }, { text: "C. 21時間/月", correct: true }, { text: "D. 40時間/月", correct: false }],
+                    hint: "募集要項に具体的な時間が記載されています。",
+                    rationale: "募集要項に平均残業時間は21時間/月と記載されています。"
+                },
+                {
+                    question: "休日休暇の制度として正しいのは？",
+                    answers: [{ text: "A. 月に1日だけ休日", correct: false }, { text: "B. 完全週休2日制＋祝日＋夏期休暇＋年末年始休暇", correct: true }, { text: "C. 不定休のみ", correct: false }, { text: "D. 年休2日制", correct: false }],
+                    hint: "一般的なIT企業と同様、休日は充実しています。",
+                    rationale: "完全週休2日制（土日）に加え、祝日、夏期、年末年始休暇が定められています。"
+                },
+                {
+                    question: "EXIO DESIGNのビジョンを一言で表すと？",
+                    answers: [{ text: "A. 「未来のあたりまえをデザインする」", correct: true }, { text: "B. 「デザインで世界一の売上を目指す」", correct: false }, { text: "C. 「効率第一のデザイン」", correct: false }, { text: "D. 「お金が全て」", correct: false }],
+                    hint: "このクイズにも出てきた「合言葉」と同じです。",
+                    rationale: "会社のビジョンであり合言葉でもあるのが「未来のあたりまえをデザインする」です。"
+                }
+            ],
+            resume: [
+                {
+                    question: "名前の書き方として正しいのはどれ？",
+                    answers: [{ text: "A. 「山田 太郎」", correct: true }, { text: "B. 「山田 太郎（タロー）」", correct: false }, { text: "C. 「山田太郎」", correct: false }, { text: "D. 「山田太郎。」", correct: false }],
+                    hint: "姓と名の間には何を入れるのが一般的でしょうか？",
+                    rationale: "姓と名の間にはスペースを入れ、ふりがなは指定された欄に記載するのが正しい書き方です。"
+                },
+                {
+                    question: "次の書き方として正しいのは？",
+                    answers: [{ text: "A. バイト", correct: false }, { text: "B. インターン", correct: false }, { text: "C. 就活", correct: false }, { text: "D. アルバイト", correct: true }],
+                    hint: "履歴書は正式な書類です。略語は避けましょう。",
+                    rationale: "履歴書などの正式な書類では、『アルバイト』のように略さずに書くのがマナーです。"
+                },
+                 {
+                    question: "学歴欄の最初に書くのは？",
+                    answers: [{ text: "A. 高校卒業から", correct: false }, { text: "B. 大学入学から", correct: false }, { text: "C. 中学校卒業から", correct: true }, { text: "D. 小学校卒業から", correct: false }],
+                    hint: "義務教育が終わった後から書くのが一般的です。",
+                    rationale: "学歴は、一般的に中学校卒業から記載します。"
+                },
+                {
+                    question: "住所の書き方で正しいのは？",
+                    answers: [{ text: "A. 東京都杉並区1-2-3", correct: false }, { text: "B. 杉並区1-2-3", correct: false }, { text: "C. 〒123-4567 東京都杉並区1丁目2番3号", correct: true }, { text: "D. 東京都杉並区1-2-3, Tokyo", correct: false }],
+                    hint: "郵便番号やマンション名なども省略せずに書きましょう。",
+                    rationale: "郵便番号を明記し、都道府県から省略せず、丁目・番地・号を使って正式に書くのが正しい書き方です。"
+                },
+                {
+                    question: "電話番号の書き方で正しいのは？",
+                    answers: [{ text: "A. 08012345678", correct: false }, { text: "B. 080-1234-5678", correct: true }, { text: "C. (080)1234-5678", correct: false }, { text: "D. 080 1234 5678", correct: false }],
+                    hint: "数字の区切りには記号を使います。",
+                    rationale: "電話番号はハイフン（-）で区切って表記するのが一般的で、最も見やすい形式です。"
+                },
+                {
+                    question: "写真の適切な服装は？",
+                    answers: [{ text: "A. 私服のパーカー", correct: false }, { text: "B. スーツ（男性はネクタイ着用、女性はジャケット）", correct: true }, { text: "C. 制服", correct: false }, { text: "D. 白シャツ1枚", correct: false }],
+                    hint: "就職活動の証明写真の定番スタイルです。",
+                    rationale: "清潔感とフォーマルな印象を与えるスーツが最も適切です。"
+                },
+                 {
+                    question: "資格の書き方で誤っているのは？",
+                    answers: [{ text: "A. 自動車免許", correct: true }, { text: "B. 普通自動車第一種運転免許", correct: false }, { text: "C. 普通自動車免許（AT限定）", correct: false }, { text: "D. 自動車二種免許", correct: false }],
+                    hint: "「自動車免許」という名称の資格はありません。",
+                    rationale: "資格は『普通自動車第一種運転免許』のように、必ず正式名称で記載します。『自動車免許』は通称であり、不適切です。"
+                },
+                {
+                    question: "TOEICの点数表記で正しいのは？",
+                    answers: [{ text: "A. TOEIC 645点", correct: false }, { text: "B. TOEIC L&R 645点", correct: false }, { text: "C. TOEIC Listening & Reading Test 645点", correct: true }, { text: "D. TOEIC Listening&Reading 642点", correct: false }],
+                    hint: "正式名称で書くことと、スコアの刻み方がポイントです。",
+                    rationale: "資格名は正式名称で書くのがマナーです。また、TOEICのスコアは5点刻みで発表されます。"
+                },
+                 {
+                    question: "誤字脱字があった場合どうすべき？",
+                    answers: [{ text: "A. 修正液で直す", correct: false }, { text: "B. 二重線＋訂正印", correct: false }, { text: "C. 新しい履歴書に書き直す", correct: true }, { text: "D. そのまま提出", correct: false }],
+                    hint: "公式な書類での訂正方法を思い出しましょう。",
+                    rationale: "履歴書は公的な書類です。修正液や訂正印の使用はマナー違反とされており、必ず新しい用紙に書き直します。"
+                },
+                {
+                    question: "次のうち、正しいものはどれ？",
+                    answers: [{ text: "A. 弊社", correct: false }, { text: "B. 御社", correct: false }, { text: "C. 貴社", correct: true }, { text: "D. 貴方", correct: false }],
+                    hint: "書き言葉で相手の会社を指す敬語です。",
+                    rationale: "履歴書などの書面では『貴社』、面接などの話し言葉では『御社』と使い分けるのが正しいマナーです。"
+                },
+                {
+                    question: "学歴・職歴欄の最後に必ず入れる言葉は？",
+                    answers: [{ text: "A. 終了", correct: false }, { text: "B. 現在", correct: false }, { text: "C. 以上", correct: true }, { text: "D. 終わり", correct: false }],
+                    hint: "これ以上書き加えることはありません、という意味の言葉です。",
+                    rationale: "学歴・職歴を書き終えたら、その次の行に右詰めで『以上』と記載するのがルールです。"
+                },
+                {
+                    question: "志望動機で避けるべき表現は？",
+                    answers: [{ text: "A. 「御社の理念に共感し…」", correct: false }, { text: "B. 「給料が高いから志望しました」", correct: true }, { text: "C. 「学生時代に学んだ〇〇を活かし…」", correct: false }, { text: "D. 「御社の強みである〇〇に惹かれ…」", correct: false }],
+                    hint: "待遇面だけを理由にすると、どう思われるでしょうか？",
+                    rationale: "給与などの待遇面を志望動機の第一に挙げると、仕事内容への意欲が低いと見なされる可能性があるため避けるべきです。"
+                },
+                {
+                    question: "本人希望欄に書く内容として正しいのは？",
+                    answers: [{ text: "A. 給与額の希望", correct: false }, { text: "B. 特にありません", correct: true }, { text: "C. 残業は月20時間までにしてください", correct: false }, { text: "D. 転勤は希望しません", correct: false }],
+                    hint: "絶対に譲れない条件がない場合は、どう書くのが適切でしょうか？",
+                    rationale: "特別な事情や譲れない条件がない場合は、『特にありません』または『貴社規定に従います』と記載するのが一般的です。"
+                },
+                {
+                    question: "志望先企業名の書き方で誤っているのは？",
+                    answers: [{ text: "A. 株式会社〇〇 御中", correct: false }, { text: "B. 株式会社〇〇 様", correct: true }, { text: "C. 株式会社〇〇", correct: false }, { text: "D. 〇〇株式会社", correct: false }],
+                    hint: "履歴書の中で企業名を書く場合、敬称は不要です。",
+                    rationale: "履歴書内の文章で企業名を書く際は『貴社』を使いますが、企業名そのものを書く欄では『様』や『御中』などの敬称はつけません。"
+                },
+                {
+                    question: "メールアドレスとして不適切なのは？",
+                    answers: [{ text: "A. ryo.miyajima@example.com", correct: false }, { text: "B. ryo2025@example.com", correct: false }, { text: "C. coolboy-1999@example.com", correct: true }, { text: "D. ryo_m@example.com", correct: false }],
+                    hint: "ビジネスの連絡に使うには、どれが相応しくないでしょうか？",
+                    rationale: "就職活動で使うメールアドレスは、プライベートな印象やふざけた印象を与える単語（スラングなど）を避け、自分の氏名などを使ったフォーマルなものが望ましいです。"
+                },
+                {
+                    question: "履歴書上部の日付はいつの日付を書くのが正しい？",
+                    answers: [{ text: "A. 会社に届く日付", correct: false }, { text: "B. 適当", correct: false }, { text: "C. 投函日", correct: true }, { text: "D. 特に決まりはない", correct: false }],
+                    hint: "書類を提出する『当日』の日付です。",
+                    rationale: "郵送の場合はポストに投函する日、持参する場合は面接当日の日付を記入するのが正しいマナーです。"
+                }
+            ],
+            portfolio: [
+                {
+                    question: "以下のうち“フォーマットが雑”なポートフォリオのNGな要素はどれ？",
+                    answers: [{ text: "A. 異なるフォントや色使いがバラバラに混在している", correct: true }, { text: "B. フォントと文字サイズが統一されている", correct: false }, { text: "C. カラーパレットが3色以内で整えられている", correct: false }, { text: "D. 全体に一貫したレイアウトが用意されている", correct: false }],
+                    hint: "デザインの基本は『統一感』です。",
+                    rationale: "フォーマットが統一されていないと、見た目の印象が悪いだけでなく、雑な仕事をする人物だという信頼性の低下にも繋がります。"
+                },
+                 {
+                    question: "チーム制作の作品を載せる際にNGなのはどれ？",
+                    answers: [{ text: "A. 自分の担当範囲を明記する", correct: false }, { text: "B. 自分が関わっていない部分だけを載せる", correct: false }, { text: "C. チームの成果を自分だけで作ったように見せる", correct: true }, { text: "D. 自分の役割を説明として示す", correct: false }],
+                    hint: "正直さと誠実さが問われます。",
+                    rationale: "チームでの成果を個人の成果のように見せるのは、経歴詐称にあたります。自分の担当範囲を明確に記載することが重要です。"
+                },
+                {
+                    question: "ポートフォリオに“自己紹介”が弱いとどうなる？",
+                    answers: [{ text: "A. 最初や最後に自己紹介があると印象的", correct: false }, { text: "B. 自己紹介がないと熱意や個性が伝わらず印象が薄くなる", correct: true }, { text: "C. 自己紹介が長いと悪い印象になる", correct: false }, { text: "D. 自己紹介がなくても構わない", correct: false }],
+                    hint: "作品だけでなく『誰が』作ったのかも重要です。",
+                    rationale: "自己紹介は、制作者の人柄やデザインへの想いを伝える重要な部分です。これが弱いと、作品だけが記憶に残り、人物の印象が薄くなってしまいます。"
+                },
+                {
+                    question: "ポートフォリオで「全部載せたい」構成はなぜNG？",
+                    answers: [{ text: "A. 見る側の時間を奪い、印象が薄くなる", correct: true }, { text: "B. 多く載せれば高評価につながる", correct: false }, { text: "C. 詳細に書けば読む人は理解してくれる", correct: false }, { text: "D. ボリュームがあるほど優秀に見える", correct: false }],
+                    hint: "採用担当者は多くのポートフォリオを見ています。伝えたいことは何ですか？",
+                    rationale: "作品を絞り込み、最も伝えたい強みが何かを明確にすることが重要です。情報量が多すぎると、かえって要点がぼやけてしまいます。"
+                },
+                {
+                    question: "成果物の説明で「プロセス」を省略することの問題点は？",
+                    answers: [{ text: "A. 成果だけ見せれば十分だから問題ない", correct: false }, { text: "B. 問題発見から解決までの思考過程が評価されない", correct: true }, { text: "C. デザインの美しさで補える", correct: false }, { text: "D. 制作時間が短く見えて有利になる", correct: false }],
+                    hint: "デザインの評価は、見た目だけではありません。",
+                    rationale: "結果だけでなく、どのような課題に対し、どう考え、工夫したかという『プロセス』こそが、デザイナーの問題解決能力を示す重要な評価ポイントです。"
+                },
+                {
+                    question: "ビジュアルが綺麗でも“意図”が伝わらない構成のNGは？",
+                    answers: [{ text: "A. キャプションと目的が明確にある", correct: false }, { text: "B. パースだけが先に見えて、その意図が分かりづらい", correct: true }, { text: "C. 意図→絵 の順で構成されている", correct: false }, { text: "D. タイトルや説明を添えている", correct: false }],
+                    hint: "『なぜこのデザインなのか』を先に伝える必要があります。",
+                    rationale: "美しいビジュアルも、その背景にある『目的』や『意図』が伝わらなければ評価されません。まず結論（目的）から伝える構成が望ましいです。"
+                },
+                 {
+                    question: "文章が長すぎ・専門的すぎるポートフォリオのNGな特徴は？",
+                    answers: [{ text: "A. 技術用語の多用と要点不明", correct: true }, { text: "B. 中学生でも理解できる文章", correct: false }, { text: "C. 1文・3文以内の簡潔なブロック", correct: false }, { text: "D. キャッチコピー＋短文で伝える構成", correct: false }],
+                    hint: "採用担当者はデザイナーとは限りません。",
+                    rationale: "専門用語を多用した長い文章は、読み手の負担を増やし、本当に伝えたいことが伝わりません。簡潔で分かりやすい言葉で説明する能力も評価されます。"
+                },
+                {
+                    question: "ポートフォリオに“自分の言葉”が見えない構成のNGはどれ？",
+                    answers: [{ text: "A. 課題に対して自分なりの問いがある", correct: false }, { text: "B. 課題をよくある課題に見せている", correct: true }, { text: "C. 決定プロセスや思考が明確に伝わる", correct: false }, { text: "D. 作品に自分らしさや意図がある", correct: false }],
+                    hint: "テンプレートのような説明になっていませんか？",
+                    rationale: "課題に対して、自分がどう考え、どう感じたかという『自分の言葉』で語ることが、個性や思考の深さを伝える上で重要です。"
+                },
+                {
+                    question: "ポートフォリオに著作権・守秘義務を無視して作品を載せる際のNG要素は？",
+                    answers: [{ text: "A. 出典を明記し、共同制作の役割を明示する", correct: false }, { text: "B. 他社案件で秘密保持契約のある資料を掲載する", correct: true }, { text: "C. 公表されている作品を載せる", correct: false }, { text: "D. 自作の作品だけを載せる", correct: false }],
+                    hint: "社会人としてのコンプライアンス意識が問われます。",
+                    rationale: "秘密保持契約（NDA）に違反して情報を掲載することは、コンプライアンス意識の欠如と見なされ、信頼を大きく損ないます。"
+                },
+                 {
+                    question: "作品の説明で漏れがちな記載項目として正しいのは？",
+                    answers: [{ text: "A. 使用ツール、制作時間、アクセス数などを含める", correct: true }, { text: "B. 「架空案件です」と明記しない", correct: false }, { text: "C. 制作期間や担当領域を省略しても構わない", correct: false }, { text: "D. 成果やコンセプトを記載しない方が良い", correct: false }],
+                    hint: "作品の背景情報を具体的に示すことが重要です。",
+                    rationale: "制作期間、使用ツール、担当範囲、成果（アクセス数など）といった具体的な情報は、作品の説得力を増し、制作者のスキルを客観的に示す上で重要です。"
+                },
+                {
+                    question: "模写や架空案件を載せる際に避けるべきNGとは？",
+                    answers: [{ text: "A. 高いクオリティで5点程度用意する", correct: false }, { text: "B. 「スクール課題です」と明記する", correct: false }, { text: "C. 意図や制作時間・ツールなどを説明する", correct: false }, { text: "D. 架空案件だと明示せず載せる", correct: true }],
+                    hint: "オリジナル作品ではないことを、正直に伝える必要があります。",
+                    rationale: "模写や架空案件であることを明記しないと、オリジナルの作品であると誤解されたり、著作権意識を疑われたりする可能性があります。"
+                },
+                {
+                    question: "ポートフォリオのデザインに凝りすぎるNGは？",
+                    answers: [{ text: "A. 背景を白くし、シンプルなフォントを使う", correct: false }, { text: "B. フォントが筆記体やポップ体で目立ちすぎる", correct: true }, { text: "C. 画面配置を統一し見やすくする", correct: false }, { text: "D. デザインより内容を際立たせる", correct: false }],
+                    hint: "主役はポートフォリオのデザインではなく、掲載されている『作品』です。",
+                    rationale: "ポートフォリオ自体のデザインが華美すぎると、主役であるべき作品の内容がかすんでしまいます。あくまでコンテンツを引き立てる、シンプルで見やすいデザインが望ましいです。"
+                },
+                {
+                    question: "掲載NGな情報として正しいものは？",
+                    answers: [{ text: "A. NDA（秘密保持契約）対象のプロジェクト内容", correct: true }, { text: "B. 公開された案件の説明", correct: false }, { text: "C. 自作作品の掲載", correct: false }, { text: "D. 公表情報や成果の掲載", correct: false }],
+                    hint: "会社の『秘密』を守る契約です。",
+                    rationale: "秘密保持契約（NDA）で保護されている情報を公開することは契約違反であり、社会人としての信頼を失う行為です。"
+                },
+                {
+                    question: "自己PR欄でNGなのはどれ？",
+                    answers: [{ text: "A. 「私の強みは〇〇です」と簡潔に書く", correct: false }, { text: "B. 「Photoshopが使えます」とだけ書く", correct: true }, { text: "C. 「課題解決のためにツールをどう使ったか」を説明する", correct: false }, { text: "D. 成果や学びを具体的に書く", correct: false }],
+                    hint: "ツールが『使える』だけでは、スキルとしてアピールできません。",
+                    rationale: "単にツールが使えると書くだけでなく、そのツールを使って『何ができるのか』『どのような課題を解決したのか』を具体的に示す必要があります。"
+                },
+                {
+                    question: "ポートフォリオを構成する際に意識するべき重要な視点は？",
+                    answers: [{ text: "A. 自分が見せたいものを全部入れること", correct: false }, { text: "B. 履歴書と同じスタイルにすること", correct: false }, { text: "C. 「どう伝えるか」から逆算して構成すること", correct: true }, { text: "D. デザインだけを重視すること", correct: false }],
+                    hint: "ゴールから考えることが大切です。",
+                    rationale: "ポートフォリオは自己満足の作品集ではありません。採用担当者に自分の強みを『どう伝えるか』という視点から逆算し、情報を取捨選択して構成する力が求められます。"
+                },
+                {
+                    question: "複数作品を掲載するときにNGな並べ方は？",
+                    answers: [{ text: "A. 順序に意図を持たず、時系列もテーマ別もバラバラ", correct: true }, { text: "B. 学生課題から順に並べる", correct: false }, { text: "C. 強みが伝わる作品を最初に置く", correct: false }, { text: "D. カテゴリーごとに整理して配置する", correct: false }],
+                    hint: "作品の順番にも『意図』を持たせましょう。",
+                    rationale: "最も自信のある作品を最初に置くなど、掲載順序にも戦略を持つべきです。意図のないランダムな並び方は、構成力の欠如と見なされる可能性があります。"
+                },
+                {
+                    question: "Webポートフォリオを送る際のNGはどれ？",
+                    answers: [{ text: "A. URLを貼り付ける", correct: false }, { text: "B. パスワード付きのポートフォリオを共有する", correct: false }, { text: "C. アクセス制限がかかっていて閲覧できない状態にする", correct: true }, { text: "D. デバイスに応じて表示が最適化されている", correct: false }],
+                    hint: "採用担当者が見られなければ、意味がありません。",
+                    rationale: "URLを送る前に、必ず自分以外のPCやスマホからアクセスできるかを確認しましょう。閲覧できなければ、評価の土俵にすら上がれません。"
+                }
+            ],
+            interview: [
+                {
+                    question: "面接の入室時の正しい行動は？",
+                    answers: [{ text: "A. ドアをノックせずに入る", correct: false }, { text: "B. ノックは2回して入る", correct: false }, { text: "C. ノックは3回し、「失礼します」と言って入る", correct: true }, { text: "D. ノックは1回だけで良い", correct: false }],
+                    hint: "日本のビジネスマナーでは、ノックの回数に意味があります。",
+                    rationale: "日本のビジネスマナーでは、3回のノックが正式とされています（2回はトイレの空室確認）。"
+                },
+                {
+                    question: "面接室に入った後の正しい第一声は？",
+                    answers: [{ text: "A. 「チャオ！」", correct: false }, { text: "B. 「どうも！」", correct: false }, { text: "C. 「失礼します」", correct: true }, { text: "D. 無言でお辞儀だけ", correct: false }],
+                    hint: "部屋に入るときのお決まりの挨拶です。",
+                    rationale: "入室時と退室時には「失礼します」と挨拶するのが基本です。"
+                },
+                {
+                    question: "面接中の正しい姿勢は？",
+                    answers: [{ text: "A. 椅子に深くもたれかかる", correct: false }, { text: "B. 背筋を伸ばし、軽く前傾する", correct: true }, { text: "C. 足を組んでリラックスする", correct: false }, { text: "D. 手を机の下に隠す", correct: false }],
+                    hint: "意欲的な印象を与える姿勢を心がけましょう。",
+                    rationale: "背筋を伸ばし、少しだけ前傾姿勢になることで、相手の話を熱心に聞いているという意欲的な印象を与えられます。"
+                },
+                {
+                    question: "「長所を教えてください」に適切な答え方は？",
+                    answers: [{ text: "A. 「真面目です」だけで終わる", correct: false }, { text: "B. 長所と、それを活かした具体的なエピソードを話す", correct: true }, { text: "C. とにかく良い性格を並べる", correct: false }, { text: "D. 「特にありません」と答える", correct: false }],
+                    hint: "主張には『根拠』が必要です。",
+                    rationale: "長所を伝える際は、それを裏付ける具体的なエピソードを交えることで、話に説得力が生まれます。"
+                },
+                 {
+                    question: "「短所を教えてください」と聞かれた時のNG回答は？",
+                    answers: [{ text: "A. 短所を正直に答え、改善努力も述べる", correct: false }, { text: "B. 「完璧主義なところです」と説明する", correct: false }, { text: "C. 「短所はありません」と答える", correct: true }, { text: "D. 短所を答えつつ、仕事でプラスになる視点を補足する", correct: false }],
+                    hint: "短所がない人間はいません。",
+                    rationale: "「短所はない」と答えると、自己分析ができていない、または謙虚さがないと判断される可能性があります。短所と、それを改善する努力をセットで話すのが良いでしょう。"
+                },
+                {
+                    question: "面接で「志望動機」を話す際にNGなのは？",
+                    answers: [{ text: "A. 「御社の理念に共感し…」と話す", correct: false }, { text: "B. 「給料が高いからです」", correct: true }, { text: "C. 「自分の経験を活かして御社に貢献できると考え…」", correct: false }, { text: "D. 「御社のサービス〇〇に魅力を感じ…」", correct: false }],
+                    hint: "履歴書編でも出てきた問題です。",
+                    rationale: "給与などの待遇面だけを志望動機にすると、仕事内容への意欲が低いと見なされるためNGです。"
+                },
+                {
+                    question: "面接中に「他社の選考状況」を聞かれた時の適切な答え方は？",
+                    answers: [{ text: "A. 正直に答える（同業界を受けているなど）", correct: true }, { text: "B. 「御社しか受けていません」と嘘をつく", correct: false }, { text: "C. 「答えたくありません」と言う", correct: false }, { text: "D. 曖昧にごまかす", correct: false }],
+                    hint: "嘘をつくのはリスクが高いです。",
+                    rationale: "正直に状況を伝えつつ、「〇〇という軸で就職活動をしており、その中でも特に御社に魅力を感じています」のように、志望度の高さを示すのが良いでしょう。"
+                },
+                {
+                    question: "面接中に沈黙があった場合の適切な対応は？",
+                    answers: [{ text: "A. 無理に話し続ける", correct: false }, { text: "B. 焦って「えー」と言い続ける", correct: false }, { text: "C. 落ち着いて考えてから答える", correct: true }, { text: "D. 黙ったまま固まる", correct: false }],
+                    hint: "焦る必要はありません。考える時間も大切です。",
+                    rationale: "すぐに答えられない質問には、「少し考えるお時間をいただけますでしょうか」と断り、落ち着いて思考を整理してから話す方が好印象です。"
+                },
+                {
+                    question: "オンライン面接でNGなのは？",
+                    answers: [{ text: "A. 背景を整えておく", correct: false }, { text: "B. 静かな環境を準備する", correct: false }, { text: "C. カメラをオンにせず参加する", correct: true }, { text: "D. マイクチェックを事前にする", correct: false }],
+                    hint: "顔が見えなければ、面接は成立しません。",
+                    rationale: "カメラをオフにすることは、対面の面接で顔を隠すのと同じです。特別な理由がない限り、必ずオンで参加します。"
+                },
+                {
+                    question: "逆質問でNGなのは？",
+                    answers: [{ text: "A. 「御社で活躍している人の特徴を教えてください」", correct: false }, { text: "B. 「今後のキャリアパスについて伺いたいです」", correct: false }, { text: "C. 「御社の強みをもっと詳しく知りたいです」", correct: false }, { text: "D. 「特にありません」", correct: true }],
+                    hint: "質問がない＝興味がない、と捉えられる可能性があります。",
+                    rationale: "「特にありません」と答えると、企業への興味や入社意欲が低いと判断される可能性があります。事前にいくつか質問を準備しておきましょう。"
+                },
+                {
+                    question: "面接での言葉遣いとして正しいのは？",
+                    answers: [{ text: "A. 「御社」", correct: true }, { text: "B. 「貴社」", correct: false }, { text: "C. 「そちらの会社」", correct: false }, { text: "D. 「あんたの会社」", correct: false }],
+                    hint: "履歴書編の復習です。話し言葉ではどちらを使うでしょうか？",
+                    rationale: "面接などの話し言葉では『御社』、履歴書などの書き言葉では『貴社』と使い分けるのが正しいマナーです。"
+                },
+                {
+                    question: "面接終了時の正しい挨拶は？",
+                    answers: [{ text: "A. 「ありがとうございました。本日は失礼します」", correct: true }, { text: "B. 「じゃあ、またお願いします」", correct: false }, { text: "C. 「バイバイ」", correct: false }, { text: "D. 無言で退室", correct: false }],
+                    hint: "最後まで気を抜かずに、丁寧な挨拶を心がけましょう。",
+                    rationale: "面接の機会をいただいたことへの感謝を述べ、「失礼します」と言ってから退室するのが丁寧なマナーです。"
+                },
+                {
+                    question: "オンライン面接で背景として最も適切なのは？",
+                    answers: [{ text: "A. カフェの雑然とした風景", correct: false }, { text: "B. 真っ白または整理整頓された自室の壁", correct: true }, { text: "C. 洗濯物が映っている部屋", correct: false }, { text: "D. バーチャル背景で派手なイラスト", correct: false }],
+                    hint: "面接官があなたに集中できる背景を選びましょう。",
+                    rationale: "余計な情報が目に入らない、白や無地の壁、または整理整頓された部屋が最も適切です。派手なバーチャル背景は避けましょう。"
+                },
+                {
+                    question: "カメラ位置の理想的な位置は？",
+                    answers: [{ text: "A. 目線より低く、見下ろすように", correct: false }, { text: "B. 顔の真正面、目線と同じ高さ", correct: true }, { text: "C. 顔の上から見下ろすように", correct: false }, { text: "D. 顔全体が半分しか映らない", correct: false }],
+                    hint: "対面で話している時と同じ目線の高さを目指しましょう。",
+                    rationale: "カメラが目線と同じ高さにあると、自然な視線で話すことができ、面接官に良い印象を与えます。"
+                },
+                {
+                    question: "音声トラブルが起きたときの最適な対応は？",
+                    answers: [{ text: "A. 焦って画面を連打する", correct: false }, { text: "B. 無言で待つ", correct: false }, { text: "C. 「少し音声が乱れているようです」と落ち着いて伝える", correct: true }, { text: "D. 退出して再入室せずに終える", correct: false }],
+                    hint: "焦らず、状況を共有することが大切です。",
+                    rationale: "トラブルが起きた際は、慌てずに「申し訳ありません、音声が聞こえづらいようです」などと状況を伝え、相手の指示を仰ぐのが良い対応です。"
+                },
+                {
+                    question: "通信が切れたときの正しい対応は？",
+                    answers: [{ text: "A. そのまま諦める", correct: false }, { text: "B. 再接続を試み、必要ならメールで連絡する", correct: true }, { text: "C. 退出したことをSNSでつぶやく", correct: false }, { text: "D. 何もせず放置する", correct: false }],
+                    hint: "最後まで諦めずに、誠意を見せましょう。",
+                    rationale: "まずは再接続を試み、それでも難しい場合は、速やかに電話やメールで状況を説明し、お詫びと今後の対応について指示を仰ぎましょう。"
+                },
+                {
+                    question: "オンライン面接で目線を合わせる工夫として適切なのは？",
+                    answers: [{ text: "A. 面接官の顔を見る", correct: false }, { text: "B. カメラを見る", correct: true }, { text: "C. 自分の映像だけを見る", correct: false }, { text: "D. メモだけを凝視する", correct: false }],
+                    hint: "画面の中の『相手の目』はどこにあるでしょうか？",
+                    rationale: "画面に映る面接官の顔ではなく、PCのカメラレンズを見ることで、相手からは「目が合っている」ように見え、より熱意が伝わります。"
+                },
+                {
+                    question: "オンライン面接の服装として正しいのは？",
+                    answers: [{ text: "A. 上だけスーツ、下はパジャマ", correct: false }, { text: "B. 普段着のパーカー", correct: false }, { text: "C. 全身スーツやジャケット着用", correct: true }, { text: "D. キャラクターTシャツ", correct: false }],
+                    hint: "画面に映らない部分も、気を抜いてはいけません。",
+                    rationale: "何かの拍子に立ち上がった際などに、下半身が映る可能性があります。対面の面接と同じく、全身の服装を整えるのがマナーです。"
+                },
+                {
+                    question: "声の出し方で意識すべきなのは？",
+                    answers: [{ text: "A. 普段よりややゆっくり・大きめに話す", correct: true }, { text: "B. 早口で一気に話す", correct: false }, { text: "C. マイクに顔を近づけてささやく", correct: false }, { text: "D. 普段通り小声で話す", correct: false }],
+                    hint: "マイクを通すと、声の印象は変わりがちです。",
+                    rationale: "オンラインでは音声が不明瞭になりがちです。普段よりも少しだけゆっくり、はっきりと話すことを意識すると、相手に内容が伝わりやすくなります。"
+                },
+                {
+                    question: "オンライン面接中に通知音が鳴ってしまった場合の対応は？",
+                    answers: [{ text: "A. 無視して続ける", correct: false }, { text: "B. 動揺して謝らない", correct: false }, { text: "C. 「失礼しました」と一言断って通知をオフにする", correct: true }, { text: "D. 面接を中断してSNSをチェックする", correct: false }],
+                    hint: "小さなミスも、誠実に対応することが大切です。",
+                    rationale: "事前に通知を切っておくのがベストですが、万が一鳴ってしまった場合は、軽く一言お詫びをしてから話を続けるのがスマートな対応です。"
+                },
+                {
+                    question: "オンライン面接における“逆質問”でNGなのは？",
+                    answers: [{ text: "A. 「御社のリモートワーク環境について伺いたいです」", correct: false }, { text: "B. 「面接の評価基準を教えてください」", correct: true }, { text: "C. 「御社での入社後のキャリアステップを知りたいです」", correct: false }, { text: "D. 「御社の研修制度について教えていただけますか」", correct: false }],
+                    hint: "面接官の評価そのものを聞くのは避けましょう。",
+                    rationale: "採用の評価基準など、選考の核心に触れる質問は、面接の場では不適切とされています。"
+                }
+            ]
+        };
+
+        // DOM Elements
+        const genreSelectionScreen = document.getElementById('genre-selection');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const headerTitle = document.getElementById('header-title');
+        const progressBar = document.getElementById('progress-bar');
+        const questionElement = document.getElementById('question');
+        const answerButtonsElement = document.getElementById('answer-buttons');
+        const hintControls = document.getElementById('hint-controls');
+        const hintButton = document.getElementById('hint-btn');
+        const hintBox = document.getElementById('hint-box');
+        const rationaleContainer = document.getElementById('rationale-container');
+        const nextButton = document.getElementById('next-btn');
+        const scoreTextElement = document.getElementById('score-text');
+        const restartButton = document.getElementById('restart-btn');
+        const appHeader = document.getElementById('app-header');
+
+        // State
+        let currentQuizData = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedGenreName = "";
+
+        // Functions
+        function goToGenreSelection() {
+            appHeader.style.display = 'flex';
+            headerTitle.innerText = '';
+            progressBar.style.width = '0%';
+            genreSelectionScreen.style.display = 'block';
+            quizScreen.style.display = 'none';
+            resultScreen.style.display = 'none';
+        }
+
+        function startQuiz(genre) {
+            currentQuizData = quizData[genre];
+            currentQuestionIndex = 0;
+            score = 0;
+            
+            if (genre === 'exio') selectedGenreName = "EXIO DESIGN編";
+            else if (genre === 'resume') selectedGenreName = "履歴書編";
+            else if (genre === 'portfolio') selectedGenreName = "ポートフォリオ編";
+            else if (genre === 'interview') selectedGenreName = "面接編";
+
+            appHeader.style.display = 'flex';
+            genreSelectionScreen.style.display = 'none';
+            resultScreen.style.display = 'none';
+            quizScreen.style.display = 'block';
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetState();
+            const currentQuestion = currentQuizData[currentQuestionIndex];
+            
+            headerTitle.innerText = `第 ${currentQuestionIndex + 1} 問`;
+            updateProgressBar();
+
+            questionElement.innerText = currentQuestion.question;
+            hintBox.innerText = currentQuestion.hint;
+
+            currentQuestion.answers.forEach(answer => {
+                const button = document.createElement('button');
+                button.innerText = answer.text;
+                button.classList.add('answer-btn');
+                if (answer.correct) {
+                    button.dataset.correct = answer.correct;
+                }
+                button.addEventListener('click', selectAnswer);
+                answerButtonsElement.appendChild(button);
+            });
+        }
+
+        function resetState() {
+            while (answerButtonsElement.firstChild) {
+                answerButtonsElement.removeChild(answerButtonsElement.firstChild);
+            }
+            hintControls.style.display = 'flex';
+            hintButton.style.display = 'inline-flex';
+            hintButton.disabled = false;
+            hintBox.style.display = 'none';
+            rationaleContainer.style.display = 'none';
+            nextButton.style.display = 'none';
+        }
+
+        function selectAnswer(e) {
+            const selectedBtn = e.target;
+            const isCorrect = selectedBtn.dataset.correct === 'true';
+
+            if (isCorrect) {
+                score++;
+                selectedBtn.classList.add('correct');
+            } else {
+                selectedBtn.classList.add('incorrect');
+            }
+            
+            Array.from(answerButtonsElement.children).forEach(button => {
+                if (button.dataset.correct === 'true') {
+                    button.classList.add('correct');
+                }
+                button.disabled = true;
+            });
+            
+            rationaleContainer.innerHTML = `<strong>解説</strong>${currentQuizData[currentQuestionIndex].rationale}`;
+            rationaleContainer.style.display = 'block';
+            hintControls.style.display = 'none';
+            hintBox.style.display = 'none';
+            nextButton.style.display = 'block';
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex + 1) / currentQuizData.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function showResult() {
+            appHeader.style.display = 'none';
+            quizScreen.style.display = 'none';
+            resultScreen.style.display = 'block';
+            scoreTextElement.innerText = `${selectedGenreName}\nあなたのスコア: ${currentQuizData.length}問中 ${score}問正解！`;
+            restartButton.style.display = 'block';
+        }
+        
+        // Event Listeners
+        hintButton.addEventListener('click', () => {
+            hintBox.style.display = 'block';
+            hintButton.style.display = 'none';
+        });
+
+        nextButton.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuizData.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        });
+
+        restartButton.addEventListener('click', goToGenreSelection);
+
+        // Initial Call
+        goToGenreSelection();
+    </script>
+</body>
+</html>
