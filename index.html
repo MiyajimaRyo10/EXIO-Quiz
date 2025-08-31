@@ -20,6 +20,12 @@
             --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.08);
             --border-radius-soft: 12px;
             --border-radius-round: 30px;
+            --correct-green-bg: #E8F5E9;
+            --correct-green-border: #66BB6A;
+            --correct-green-text: #2E7D32;
+            --incorrect-red-bg: #FFEBEE;
+            --incorrect-red-border: #EF5350;
+            --incorrect-red-text: #C62828;
         }
 
         body {
@@ -156,6 +162,29 @@
             transform: translateY(-2px);
         }
 
+        /* --- ここから追加 --- */
+        #number-selection {
+            display: none;
+        }
+
+        .back-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-dark);
+            width: calc(100% - 20px);
+            margin: 15px auto 0 auto;
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: 500;
+            border-radius: var(--border-radius-round);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .back-btn:hover {
+            background-color: #f5f5f5;
+        }
+        /* --- ここまで追加 --- */
+
         #quiz-screen {
             display: none;
             height: 100%;
@@ -163,6 +192,33 @@
         #quiz-screen .quiz-content {
             justify-content: flex-start;
         }
+        
+        /* --- ここから追加 --- */
+        #feedback-indicator {
+            display: none;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: var(--border-radius-soft);
+            animation: fadeInScale 0.4s ease-out;
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .feedback-correct {
+            color: var(--correct-green-text);
+            background-color: var(--correct-green-bg);
+            border: 2px solid var(--correct-green-border);
+        }
+        .feedback-incorrect {
+            color: var(--incorrect-red-text);
+            background-color: var(--incorrect-red-bg);
+            border: 2px solid var(--incorrect-red-border);
+        }
+        /* --- ここまで追加 --- */
 
         .question-card {
             background-color: var(--bg-soft);
@@ -211,14 +267,14 @@
             border-color: #90CAF9;
         }
         .answer-btn.correct {
-            background-color: #E8F5E9;
-            border-color: #66BB6A;
+            background-color: var(--correct-green-bg);
+            border-color: var(--correct-green-border);
             color: var(--text-dark);
             box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
         }
         .answer-btn.incorrect {
-            background-color: #FFEBEE;
-            border-color: #EF5350;
+            background-color: var(--incorrect-red-bg);
+            border-color: var(--incorrect-red-border);
             color: var(--text-dark);
             box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
         }
@@ -360,14 +416,26 @@
             
             <div class="quiz-content">
                 <div id="genre-selection">
-                    <h2>挑戦するクイズを選んでください</h2>
-                    <button class="genre-btn" onclick="startQuiz('exio')">🏢 EXIO DESIGN編</button>
-                    <button class="genre-btn" onclick="startQuiz('resume')">📄 履歴書編</button>
-                    <button class="genre-btn" onclick="startQuiz('portfolio')">🎨 ポートフォリオ編</button>
-                    <button class="genre-btn" onclick="startQuiz('interview')">🎤 面接編</button>
+                    <div id="genre-buttons">
+                        <h2>挑戦するクイズを選んでください</h2>
+                        <button class="genre-btn" onclick="showNumberOptions('exio')">🏢 EXIO DESIGN編</button>
+                        <button class="genre-btn" onclick="showNumberOptions('resume')">📄 履歴書編</button>
+                        <button class="genre-btn" onclick="showNumberOptions('portfolio')">🎨 ポートフォリオ編</button>
+                        <button class="genre-btn" onclick="showNumberOptions('interview')">🎤 面接編</button>
+                    </div>
+                    <div id="number-selection">
+                        <h2>何問挑戦しますか？</h2>
+                        <button class="genre-btn" onclick="startQuiz(5)">5問</button>
+                        <button class="genre-btn" onclick="startQuiz(10)">10問</button>
+                        <button class="genre-btn" onclick="startQuiz('all')">全問</button>
+                        <button class="back-btn" onclick="showGenreOptions()">ジャンル選択に戻る</button>
+                    </div>
                 </div>
 
                 <div id="quiz-screen">
+                    <!-- ▼▼▼ HTML要素を追加 ▼▼▼ -->
+                    <div id="feedback-indicator"></div>
+                    <!-- ▲▲▲ HTML要素を追加 ▲▲▲ -->
                     <div class="question-card">
                         <h3 id="question"></h3>
                     </div>
@@ -544,7 +612,7 @@
                     rationale: "清潔感とフォーマルな印象を与えるスーツが最も適切です。"
                 },
                  {
-                    question: "資格の書き方で正しいのは？",
+                    question: "資格の書き方で誤っているのはどれ？",
                     answers: [{ text: "A. 自動車免許", correct: true }, { text: "B. 普通自動車第一種運転免許", correct: false }, { text: "C. 普通自動車免許（AT限定）", correct: false }, { text: "D. 自動車二種免許", correct: false }],
                     hint: "「自動車免許」という名称の資格はありません。",
                     rationale: "資格は『普通自動車第一種運転免許』のように、必ず正式名称で記載します。『自動車免許』は通称であり、不適切です。"
@@ -586,14 +654,14 @@
                     rationale: "特別な事情や譲れない条件がない場合は、『特にありません』または『貴社規定に従います』と記載するのが一般的です。"
                 },
                 {
-                    question: "志望先企業名の書き方で正しいのは？",
-                    answers: [{ text: "A. 株式会社〇〇 御中", correct: false }, { text: "B. 株式会社〇〇", correct: true }, { text: "C. 株式会社〇〇 様", correct: false }, { text: "D. 〇〇株式会社 殿", correct: false }],
+                    question: "志望先企業名の書き方で誤っているのはどれ？",
+                    answers: [{ text: "A. 株式会社〇〇 御中", correct: false }, { text: "B. 株式会社〇〇 様", correct: true }, { text: "C. 株式会社〇〇", correct: false }, { text: "D. 〇〇株式会社", correct: false }],
                     hint: "履歴書の中で企業名を書く場合、敬称は不要です。",
                     rationale: "履歴書内の文章で企業名を書く際は『貴社』を使いますが、企業名そのものを書く欄では『様』や『御中』などの敬称はつけません。"
                 },
                 {
                     question: "メールアドレスとして不適切なのは？",
-                    answers: [{ text: "A. exio.design@example.com", correct: false }, { text: "B. exio2025@example.com", correct: false }, { text: "C. zettainiotosuna@example.com", correct: true }, { text: "D. exio_d@example.com", correct: false }],
+                    answers: [{ text: "A. ryo.miyajima@example.com", correct: false }, { text: "B. ryo2025@example.com", correct: false }, { text: "C. coolboy-1999@example.com", correct: true }, { text: "D. ryo_m@example.com", correct: false }],
                     hint: "ビジネスの連絡に使うには、どれが相応しくないでしょうか？",
                     rationale: "就職活動で使うメールアドレスは、プライベートな印象やふざけた印象を与える単語（スラングなど）を避け、自分の氏名などを使ったフォーマルなものが望ましいです。基本的には大学のメールアドレスを使用するのが良いでしょう。"
                 },
@@ -844,6 +912,7 @@
         const resultScreen = document.getElementById('result-screen');
         const headerTitle = document.getElementById('header-title');
         const progressBar = document.getElementById('progress-bar');
+        const feedbackIndicator = document.getElementById('feedback-indicator'); // 追加
         const questionElement = document.getElementById('question');
         const answerButtonsElement = document.getElementById('answer-buttons');
         const hintControls = document.getElementById('hint-controls');
@@ -859,6 +928,7 @@
         let currentQuizData = [];
         let currentQuestionIndex = 0;
         let score = 0;
+        let selectedGenre = "";
         let selectedGenreName = "";
 
         // Functions
@@ -866,20 +936,40 @@
             appHeader.style.display = 'flex';
             headerTitle.innerText = '';
             progressBar.style.width = '0%';
-            genreSelectionScreen.style.display = 'block';
             quizScreen.style.display = 'none';
             resultScreen.style.display = 'none';
+            genreSelectionScreen.style.display = 'block';
+            showGenreOptions();
+        }
+        
+        function showNumberOptions(genre) {
+            selectedGenre = genre;
+            document.getElementById('genre-buttons').style.display = 'none';
+            document.getElementById('number-selection').style.display = 'block';
         }
 
-        function startQuiz(genre) {
-            currentQuizData = quizData[genre];
+        function showGenreOptions() {
+            document.getElementById('genre-buttons').style.display = 'block';
+            document.getElementById('number-selection').style.display = 'none';
+        }
+
+        function startQuiz(numberOfQuestions) {
+            const allGenreQuestions = [...quizData[selectedGenre]].sort(() => 0.5 - Math.random());
+            
+            if (numberOfQuestions === 'all') {
+                currentQuizData = allGenreQuestions;
+            } else {
+                const numToTake = Math.min(numberOfQuestions, allGenreQuestions.length);
+                currentQuizData = allGenreQuestions.slice(0, numToTake);
+            }
+            
             currentQuestionIndex = 0;
             score = 0;
             
-            if (genre === 'exio') selectedGenreName = "EXIO DESIGN編";
-            else if (genre === 'resume') selectedGenreName = "履歴書編";
-            else if (genre === 'portfolio') selectedGenreName = "ポートフォリオ編";
-            else if (genre === 'interview') selectedGenreName = "面接編";
+            if (selectedGenre === 'exio') selectedGenreName = "EXIO DESIGN編";
+            else if (selectedGenre === 'resume') selectedGenreName = "履歴書編";
+            else if (selectedGenre === 'portfolio') selectedGenreName = "ポートフォリオ編";
+            else if (selectedGenre === 'interview') selectedGenreName = "面接編";
 
             appHeader.style.display = 'flex';
             genreSelectionScreen.style.display = 'none';
@@ -915,6 +1005,7 @@
             while (answerButtonsElement.firstChild) {
                 answerButtonsElement.removeChild(answerButtonsElement.firstChild);
             }
+            feedbackIndicator.style.display = 'none'; // 追加
             hintControls.style.display = 'flex';
             hintButton.style.display = 'inline-flex';
             hintButton.disabled = false;
@@ -927,12 +1018,19 @@
             const selectedBtn = e.target;
             const isCorrect = selectedBtn.dataset.correct === 'true';
 
+            // ▼▼▼ ここからロジックを修正 ▼▼▼
             if (isCorrect) {
                 score++;
                 selectedBtn.classList.add('correct');
+                feedbackIndicator.innerText = "正解！";
+                feedbackIndicator.className = 'feedback-correct';
             } else {
                 selectedBtn.classList.add('incorrect');
+                feedbackIndicator.innerText = "不正解！";
+                feedbackIndicator.className = 'feedback-incorrect';
             }
+            feedbackIndicator.style.display = 'block';
+            // ▲▲▲ ここまでロジックを修正 ▲▲▲
             
             Array.from(answerButtonsElement.children).forEach(button => {
                 if (button.dataset.correct === 'true') {
@@ -945,6 +1043,13 @@
             rationaleContainer.style.display = 'block';
             hintControls.style.display = 'none';
             hintBox.style.display = 'none';
+            
+            // 最後の問題の場合、ボタンのテキストを「結果を見る」に変更
+            if (currentQuestionIndex === currentQuizData.length - 1) {
+                nextButton.innerText = "結果を見る";
+            } else {
+                nextButton.innerText = "次の問題へ";
+            }
             nextButton.style.display = 'block';
         }
 
@@ -983,3 +1088,6 @@
     </script>
 </body>
 </html>
+
+
+
